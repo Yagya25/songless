@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { loadArtists, searchArtists } from '../game/library';
-import { Arrow, Back, Globe, Search } from '../components/Icons';
+import { Arrow, Back, Check, Cross, Globe, Search } from '../components/Icons';
 
-export default function ArtistPicker({ onPickArtist, onPickMix, onBack }) {
+export const MAX_ARTISTS = 10;
+
+export default function ArtistPicker({ onPlay, onPickMix, onBack }) {
   const [artists, setArtists] = useState(null);
   const [query, setQuery] = useState('');
   const [region, setRegion] = useState('All');
+  const [picked, setPicked] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -22,6 +25,17 @@ export default function ArtistPicker({ onPickArtist, onPickMix, onBack }) {
     const scope = region === 'All' ? artists : artists.filter((a) => a.r === region);
     return searchArtists(query, scope, 120);
   }, [artists, query, region]);
+
+  const pickedIds = useMemo(() => new Set(picked.map((a) => a.id)), [picked]);
+  const full = picked.length >= MAX_ARTISTS;
+
+  const toggle = (a) => {
+    setPicked((prev) =>
+      prev.some((p) => p.id === a.id)
+        ? prev.filter((p) => p.id !== a.id)
+        : prev.length >= MAX_ARTISTS ? prev : [...prev, a]
+    );
+  };
 
   if (error) return <p className="error">Couldn&apos;t load the song library: {error}</p>;
   if (!artists) return <p className="loading">Loading artists…</p>;
@@ -55,7 +69,7 @@ export default function ArtistPicker({ onPickArtist, onPickMix, onBack }) {
           className="picker-search"
           type="search"
           value={query}
-          placeholder="Search an artist… try Arijit Singh, BTS, Queen"
+          placeholder={`Search artists — pick up to ${MAX_ARTISTS}`}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search artists"
         />
@@ -80,18 +94,56 @@ export default function ArtistPicker({ onPickArtist, onPickMix, onBack }) {
         <p className="loading">No artist matches “{query}”.</p>
       ) : (
         <ul className="artist-grid">
-          {shown.map((a) => (
-            <li key={a.id}>
-              <button type="button" className="artist-card" onClick={() => onPickArtist(a)}>
-                {a.k
-                  ? <img src={a.k.replace(/\{sz\}/g, 200)} alt="" loading="lazy" />
-                  : <span className="artist-fallback" aria-hidden="true">{a.n[0]}</span>}
-                <strong>{a.n}</strong>
-                <em>{a.c} songs</em>
-              </button>
-            </li>
-          ))}
+          {shown.map((a) => {
+            const on = pickedIds.has(a.id);
+            return (
+              <li key={a.id}>
+                <button
+                  type="button"
+                  className={`artist-card ${on ? 'is-picked' : ''}`}
+                  onClick={() => toggle(a)}
+                  disabled={!on && full}
+                  aria-pressed={on}
+                >
+                  <span className="artist-art">
+                    {a.k
+                      ? <img src={a.k.replace(/\{sz\}/g, 200)} alt="" loading="lazy" />
+                      : <span className="artist-fallback" aria-hidden="true">{a.n[0]}</span>}
+                    {on && <span className="artist-tick" aria-hidden="true"><Check size={16} /></span>}
+                  </span>
+                  <strong>{a.n}</strong>
+                  <em>{a.c} songs</em>
+                </button>
+              </li>
+            );
+          })}
         </ul>
+      )}
+
+      {/* Sticky tray so the selection and the play button stay reachable while
+          scrolling a long grid. */}
+      {picked.length > 0 && (
+        <div className="tray" role="region" aria-label="Selected artists">
+          <div className="tray-inner">
+            <ul className="tray-chips">
+              {picked.map((a) => (
+                <li key={a.id}>
+                  <button type="button" onClick={() => toggle(a)} aria-label={`Remove ${a.n}`}>
+                    {a.n} <Cross size={13} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="tray-go">
+              <span className="tray-count">
+                {picked.length}/{MAX_ARTISTS} · {picked.length > 1 ? 10 : 5} songs
+              </span>
+              <button type="button" className="btn primary" onClick={() => onPlay(picked)}>
+                Play <Arrow size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );

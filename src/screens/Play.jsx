@@ -6,10 +6,10 @@ import Reveal from '../components/Reveal';
 import { LAYERS } from '../audio/layers';
 import { Back, Cross, Pause, Play as PlayIcon, Skip } from '../components/Icons';
 import { useGame } from '../game/useGame';
-import { HEARDLE_STEPS, SONGS_PER_RUN, bandleScore, scrubberScore } from '../game/scoring';
+import { HEARDLE_STEPS, bandleScore, scrubberScore } from '../game/scoring';
 
-export default function Play({ mode, pool, poolLabel, onExit, onDone }) {
-  const g = useGame({ mode, pool, poolLabel });
+export default function Play({ mode, pool, poolLabel, songCount, onExit, onDone }) {
+  const g = useGame({ mode, pool, poolLabel, songCount });
   const isHeardle = mode === 'heardle';
   const isBandle = mode === 'bandle';
 
@@ -45,7 +45,7 @@ export default function Play({ mode, pool, poolLabel, onExit, onDone }) {
         </button>
         <div className="play-meta">
           <span className="pill">{poolLabel}</span>
-          <span className="muted">Song {g.round + 1} of {SONGS_PER_RUN}</span>
+          <span className="muted">Song {g.round + 1} of {songCount}</span>
         </div>
         <div className="play-score">
           <strong>{g.total.toLocaleString()}</strong>
@@ -54,7 +54,7 @@ export default function Play({ mode, pool, poolLabel, onExit, onDone }) {
       </header>
 
       <div className="dots" aria-hidden="true">
-        {Array.from({ length: SONGS_PER_RUN }, (_, i) => (
+        {Array.from({ length: songCount }, (_, i) => (
           <span key={i} className={i < g.results.length ? 'done' : i === g.round ? 'now' : ''} />
         ))}
       </div>
@@ -65,7 +65,7 @@ export default function Play({ mode, pool, poolLabel, onExit, onDone }) {
           song={g.song}
           result={last}
           isBandle={isBandle}
-          isLastRound={g.round + 1 >= SONGS_PER_RUN}
+          isLastRound={g.round + 1 >= songCount}
           onReplay={() => g.play(30, LAYERS.length - 1)}
           onNext={g.next}
         />

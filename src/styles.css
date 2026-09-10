@@ -603,21 +603,92 @@ img { max-width: 100%; display: block; }
   gap: 3px;
   justify-items: center;
 }
+.artist-card:disabled { opacity: .3; cursor: not-allowed; }
+
+.artist-art { position: relative; display: block; width: 100%; margin-bottom: 8px; }
 .artist-card img, .artist-fallback {
   width: 100%;
   aspect-ratio: 1;
   border-radius: var(--r-md);
   object-fit: cover;
-  margin-bottom: 8px;
   border: 1px solid var(--line);
   transition: transform .2s, border-color .2s, filter .2s;
   filter: brightness(.86);
 }
-.artist-card:hover img, .artist-card:hover .artist-fallback {
+.artist-card:hover:not(:disabled) img,
+.artist-card:hover:not(:disabled) .artist-fallback {
   transform: translateY(-3px);
   border-color: var(--accent);
   filter: brightness(1);
 }
+.artist-card.is-picked img, .artist-card.is-picked .artist-fallback {
+  border-color: var(--accent);
+  border-width: 2px;
+  filter: brightness(1);
+}
+.artist-card.is-picked strong { color: var(--accent); }
+.artist-tick {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .55);
+}
+
+/* ---------- sticky selection tray ---------- */
+.tray {
+  position: sticky;
+  bottom: 12px;
+  z-index: 25;
+  margin-top: 22px;
+  animation: riseIn .28s ease-out;
+}
+.tray-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  background: rgba(22, 22, 28, .92);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  padding: 12px 14px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .6);
+}
+.tray-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-width: 0;
+}
+.tray-chips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-3);
+  border: 0;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 6px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background .16s, color .16s;
+}
+.tray-chips button:hover { background: var(--hot); color: #fff; }
+.tray-go { display: flex; align-items: center; gap: 12px; flex: none; }
+.tray-count { font-size: 12px; color: var(--muted-2); font-variant-numeric: tabular-nums; }
 .artist-fallback {
   display: grid;
   place-items: center;

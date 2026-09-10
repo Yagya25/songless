@@ -44,18 +44,21 @@ export function finalScore({ mode, seconds, stepIndex, layer, wrongGuesses, solv
   return Math.max(0, base - wrongGuesses * WRONG_GUESS_COST);
 }
 
+// Held as fractions of a perfect run so a 10-song multi-artist run ranks on the
+// same curve as a 5-song one, instead of every long run reading as a high score.
 const RANKS = [
-  [45000, 'Music Genius'],
-  [40000, 'Golden Ear'],
-  [34000, 'Chart Topper'],
-  [28000, 'Radio Regular'],
-  [22000, 'Casual Listener'],
-  [15000, 'Background Noise'],
+  [0.90, 'Music Genius'],
+  [0.80, 'Golden Ear'],
+  [0.68, 'Chart Topper'],
+  [0.56, 'Radio Regular'],
+  [0.44, 'Casual Listener'],
+  [0.30, 'Background Noise'],
   [0, 'Silence Enjoyer'],
 ];
 
-export function rankFor(total) {
-  return RANKS.find(([min]) => total >= min)[1];
-}
-
 export const maxRunScore = (songs = SONGS_PER_RUN) => songs * MAX_SCORE;
+
+export function rankFor(total, songs = SONGS_PER_RUN) {
+  const share = total / maxRunScore(songs);
+  return RANKS.find(([min]) => share >= min)[1];
+}

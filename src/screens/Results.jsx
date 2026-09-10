@@ -4,12 +4,22 @@ import { Share } from '../components/Icons';
 import { useCountUp } from '../game/useCountUp';
 import { MAX_SCORE, SONGS_PER_RUN, rankFor } from '../game/scoring';
 import { recordRun } from '../game/storage';
+import { shareResult } from '../game/shareImage';
 
-const medal = (score) => (score >= 9000 ? '🟩' : score >= 6000 ? '🟨' : score > 0 ? '🟧' : '⬛');
 const MODE_LABEL = { scrubber: 'Scrubber', bandle: 'Bandle', heardle: 'Classic' };
 
-export default function Results({ results, total, poolLabel, mode, onAgain, onChange }) {
-  const [copied, setCopied] = useState(false);
+const SHARE_LABEL = {
+  idle: 'Share result',
+  working: 'Building image…',
+  shared: 'Shared',
+  downloaded: 'Image saved',
+  copied: 'Copied',
+  cancelled: 'Share result',
+  failed: 'Could not share',
+};
+
+export default function Results({ results, total, poolLabel, mode, songCount = SONGS_PER_RUN, onAgain, onChange }) {
+  const [shareState, setShareState] = useState('idle');
   const saved = useRef(false);
 
   // Guarded so a refresh on this screen can't double-count the run.
@@ -19,27 +29,15 @@ export default function Results({ results, total, poolLabel, mode, onAgain, onCh
     recordRun(results, total);
   }, [results, total]);
 
-  const max = SONGS_PER_RUN * MAX_SCORE;
-  const rank = rankFor(total);
+  const max = songCount * MAX_SCORE;
+  const rank = rankFor(total, songCount);
   const shown = useCountUp(total, 1100);
 
-  const shareText = [
-    `🎵 Songless — ${poolLabel}`,
-    `${total.toLocaleString()} / ${max.toLocaleString()} · ${rank}`,
-    '',
-    ...results.map(
-      (r, i) =>
-        `${i + 1}  ${r.solved ? `${r.seconds.toFixed(1)}s` : '—'}  ${medal(r.score)} ${r.score.toLocaleString()}`
-    ),
-  ].join('\n');
-
   const share = async () => {
-    try {
-      if (navigator.share) await navigator.share({ text: shareText });
-      else await navigator.clipboard.writeText(shareText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch { /* dismissed */ }
+    setShareState('working');
+    const outcome = await shareResult({ results, total, poolLabel, mode });
+    setShareState(outcome);
+    if (outcome !== 'failed') setTimeout(() => setShareState('idle'), 2600);
   };
 
   return (
@@ -74,10 +72,15 @@ export default function Results({ results, total, poolLabel, mode, onAgain, onCh
       </ol>
 
       <div className="results-actions">
-        <button type="button" className="btn ghost" onClick={share}>
-          <Share /> {copied ? 'Copied' : 'Share result'}
+        <button
+          type="button"
+          className="btn ghost"
+          onClick={share}
+          disabled={shareState === 'working'}
+        >
+          <Share /> {SHARE_LABEL[shareState]}
         </button>
-        <button type="button" className="btn ghost" onClick={onChange}>Change artist</button>
+        <button type="button" className="btn ghost" onClick={onChange}>Change artists</button>
         <button type="button" className="btn primary" onClick={onAgain}>Play again</button>
       </div>
     </section>

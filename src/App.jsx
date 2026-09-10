@@ -15,6 +15,7 @@ export default function App() {
   const [mode, setMode] = useState('scrubber');
   const [pool, setPool] = useState(null);
   const [poolLabel, setPoolLabel] = useState('');
+  const [songCount, setSongCount] = useState(SONGS_PER_RUN);
   const [run, setRun] = useState(0);
   const [outcome, setOutcome] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -27,14 +28,17 @@ export default function App() {
   // later resume() is a fight with the autoplay policy.
   const start = () => { audio.unlock(); setScreen('picker'); };
 
-  const begin = useCallback(async (loader, label) => {
+  const begin = useCallback(async (loader, label, count) => {
     setBusy(true);
     setError(null);
     try {
       const songs = await loader();
-      if (songs.length < SONGS_PER_RUN) throw new Error('Not enough songs in this pool.');
+      if (songs.length < count) {
+        throw new Error(`Only ${songs.length} songs here — need at least ${count}.`);
+      }
       setPool(songs);
       setPoolLabel(label);
+      setSongCount(count);
       setRun((n) => n + 1);
       setScreen('play');
     } catch (e) {
@@ -43,6 +47,24 @@ export default function App() {
       setBusy(false);
     }
   }, []);
+
+  // A single artist plays 5 songs; two or more opens it up to 10, since a
+  // combined pool is both bigger and harder to place.
+  const playArtists = useCallback(
+    (chosen) => {
+      const count = chosen.length > 1 ? 10 : SONGS_PER_RUN;
+      const label =
+        chosen.length === 1
+          ? chosen[0].n
+          : `${chosen[0].n} + ${chosen.length - 1} more`;
+      return begin(
+        async () => (await Promise.all(chosen.map((a) => loadArtistSongs(a.id)))).flat(),
+        label,
+        count
+      );
+    },
+    [begin]
+  );
 
   const onDone = useCallback((results, total) => {
     setOutcome({ results, total });
@@ -89,17 +111,18 @@ export default function App() {
         {screen === 'picker' && (
           <ArtistPicker
             onBack={goHome}
-            onPickMix={() => begin(loadHits, 'Mix — every artist')}
-            onPickArtist={(a) => begin(() => loadArtistSongs(a.id), a.n)}
+            onPickMix={() => begin(loadHits, 'Mix — every artist', SONGS_PER_RUN)}
+            onPlay={playArtists}
           />
         )}
 
         {screen === 'play' && pool && (
           <Play
-            key={`${poolLabel}-${mode}-${run}`}
+            key={`${poolLabel}-${mode}-${songCount}-${run}`}
             mode={mode}
             pool={pool}
             poolLabel={poolLabel}
+            songCount={songCount}
             onExit={() => setScreen('picker')}
             onDone={onDone}
           />
@@ -111,6 +134,7 @@ export default function App() {
             results={outcome.results}
             total={outcome.total}
             poolLabel={poolLabel}
+            songCount={songCount}
             mode={mode}
             onAgain={again}
             onChange={() => setScreen('picker')}

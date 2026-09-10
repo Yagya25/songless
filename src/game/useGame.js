@@ -8,8 +8,8 @@ import {
 import { FULL_LAYER } from '../audio/layers';
 import { pickRound } from './library';
 
-export function useGame({ mode, pool, poolLabel }) {
-  const [songs, setSongs] = useState(() => pickRound(pool, SONGS_PER_RUN));
+export function useGame({ mode, pool, poolLabel, songCount = SONGS_PER_RUN }) {
+  const [songs, setSongs] = useState(() => pickRound(pool, songCount));
   const [round, setRound] = useState(0);
   const [unlocked, setUnlocked] = useState(START_SECONDS);
   const [stepIndex, setStepIndex] = useState(0);
@@ -137,7 +137,7 @@ export function useGame({ mode, pool, poolLabel }) {
 
   const restart = useCallback(() => {
     audio.stop();
-    setSongs(pickRound(pool, SONGS_PER_RUN));
+    setSongs(pickRound(pool, songCount));
     setRound(0);
     setUnlocked(START_SECONDS);
     setStepIndex(0);
@@ -146,7 +146,7 @@ export function useGame({ mode, pool, poolLabel }) {
     setResults([]);
     setPhase('playing');
     setPlaying(false);
-  }, [pool]);
+  }, [pool, songCount]);
 
   const total = results.reduce((n, r) => n + r.score, 0);
 
