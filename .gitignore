@@ -8,3 +8,5 @@ dist-ssr
 
 # Raw iTunes responses. Regenerate with: npm run data
 scripts/.cache
+
+.vercel
