@@ -50,21 +50,27 @@ function ScoreCurve() {
   );
 }
 
-function Marquee() {
-  const [art, setArt] = useState([]);
-  const [count, setCount] = useState(null);
-
+// Reads the shipped index so the headline figures can never drift from the
+// library the way a hardcoded count does.
+function useLibraryStats() {
+  const [stats, setStats] = useState(null);
   useEffect(() => {
     loadArtists()
-      .then((list) => {
-        setCount(list.length);
-        setArt(list.filter((a) => a.k).sort(() => Math.random() - 0.5).slice(0, 28));
-      })
+      .then((list) =>
+        setStats({
+          artists: list.length,
+          songs: list.reduce((n, a) => n + a.c, 0),
+          art: list.filter((a) => a.k).slice(0, 30),
+        })
+      )
       .catch(() => {});
   }, []);
+  return stats;
+}
 
-  if (!art.length) return null;
-  const strip = [...art, ...art]; // duplicated so the loop is seamless
+function Marquee({ stats }) {
+  if (!stats?.art.length) return null;
+  const strip = [...stats.art, ...stats.art]; // duplicated so the loop is seamless
 
   return (
     <div className="marquee-wrap">
@@ -73,13 +79,16 @@ function Marquee() {
           <img key={i} src={a.k.replace(/\{sz\}/g, 100)} alt="" loading="lazy" />
         ))}
       </div>
-      {count && <p className="marquee-note">{count} artists, from Arijit Singh to Zach Bryan</p>}
+      <p className="marquee-note">
+        {stats.artists} artists across 15 scenes, from Arijit Singh to Zach Bryan
+      </p>
     </div>
   );
 }
 
 export default function Landing({ onStart, mode, setMode, stats }) {
   const wave = useMemo(() => bars(150), []);
+  const lib = useLibraryStats();
 
   return (
     <div className="landing">
@@ -99,7 +108,9 @@ export default function Landing({ onStart, mode, setMode, stats }) {
           <button type="button" className="btn primary lg" onClick={onStart}>
             <Play size={17} /> Start playing
           </button>
-          <span className="hero-meta">Free · No account · 28,000 songs</span>
+          <span className="hero-meta">
+            Free · No account{lib ? ` · ${lib.songs.toLocaleString()} songs` : ''}
+          </span>
         </div>
 
         <figure className="wave-demo">
@@ -116,7 +127,7 @@ export default function Landing({ onStart, mode, setMode, stats }) {
         </figure>
       </section>
 
-      <Marquee />
+      <Marquee stats={lib} />
 
       <section className="how">
         <h2 className="section-title">How a round works</h2>

@@ -1,7 +1,8 @@
 # Songless
 
-Guess the song from a fraction of a second. Three game modes, ~400 artists and
-38,000 songs from every major music region.
+Guess the song from a fraction of a second. Three game modes, 446 artists and
+42,000 songs across 15 scenes -- pop, rock, hip-hop, Bollywood, K-pop, Latin,
+Afrobeats, Desi hip-hop, Punjabi and more.
 
 ## Modes
 
@@ -37,7 +38,7 @@ npm run data -- --no-fetch    # rebuild from cache only (~2s) after changing fil
 Add artists by appending to `scripts/artists.seed.json` and re-running. Raw API
 responses are cached in `scripts/.cache` (gitignored), so re-runs only fetch what
 is new. Apple rate-limits at roughly 20 requests/minute, and the fetcher is gated
-to stay under that — a cold build of 400 artists takes around two hours.
+to stay under that — a cold build of 450 artists takes around two hours.
 
 Output:
 
@@ -45,7 +46,7 @@ Output:
 |---|---|---|
 | `artists.json` | 24 KB gz | Always — powers artist search |
 | `artists/<id>.json` | ~30 KB | One artist is picked |
-| `hits.json` | 465 KB gz | Mixed mode only |
+| `hits.json` | 508 KB gz | Mixed mode only |
 
 ## Notes on the audio
 
