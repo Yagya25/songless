@@ -127,16 +127,23 @@ function compileArtist(raw) {
     if (better) byTitle.set(key, r);
   }
 
-  const songs = [...byTitle.values()].map((r, idx) => ({
-    i: r.trackId,
-    t: r.trackName,
-    a: r.artistName,
-    y: Number((r.releaseDate || '').slice(0, 4)) || null,
-    g: r.primaryGenreName || null,
-    p: r.previewUrl,
-    k: (r.artworkUrl100 || '').replace('100x100bb.jpg', '{sz}x{sz}bb.jpg') || null,
-    d: idx < 15 ? 1 : idx < 40 ? 2 : idx < 80 ? 3 : 4, // difficulty from catalog position
-  }));
+  // Tracks where this artist is the primary credit rank above ones they are only
+  // co-credited on. Without this an obscure collaboration can land as an artist's
+  // "top" song -- Seedhe Maut's first entry was a Bhojpuri feature -- which then
+  // feeds the mixed-mode hit pool and the difficulty tiers. sort() is stable, so
+  // Apple's own ordering survives inside each group.
+  const songs = [...byTitle.values()]
+    .sort((a, b) => Number(b.artistId === aid) - Number(a.artistId === aid))
+    .map((r, idx) => ({
+      i: r.trackId,
+      t: r.trackName,
+      a: r.artistName,
+      y: Number((r.releaseDate || '').slice(0, 4)) || null,
+      g: r.primaryGenreName || null,
+      p: r.previewUrl,
+      k: (r.artworkUrl100 || '').replace('100x100bb.jpg', '{sz}x{sz}bb.jpg') || null,
+      d: idx < 15 ? 1 : idx < 40 ? 2 : idx < 80 ? 3 : 4, // difficulty from catalog position
+    }));
 
   return {
     id: aid,

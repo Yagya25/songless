@@ -2,10 +2,10 @@ import { useEffect } from 'react';
 import Scrubber from '../components/Scrubber';
 import LayerStack from '../components/LayerStack';
 import GuessInput from '../components/GuessInput';
+import Reveal from '../components/Reveal';
 import { LAYERS } from '../audio/layers';
 import { Back, Cross, Pause, Play as PlayIcon, Skip } from '../components/Icons';
 import { useGame } from '../game/useGame';
-import { artwork } from '../game/library';
 import { HEARDLE_STEPS, SONGS_PER_RUN, bandleScore, scrubberScore } from '../game/scoring';
 
 export default function Play({ mode, pool, poolLabel, onExit, onDone }) {
@@ -33,6 +33,9 @@ export default function Play({ mode, pool, poolLabel, onExit, onDone }) {
 
   const revealed = g.phase === 'revealed';
   const last = g.results[g.results.length - 1];
+  // Counted from this round's guesses, which reset each round -- so keying the
+  // stage on it replays the shake per miss without shaking on a fresh round.
+  const misses = g.guesses.filter((x) => !x.correct && !x.skipped).length;
 
   return (
     <section className="play">
@@ -57,28 +60,18 @@ export default function Play({ mode, pool, poolLabel, onExit, onDone }) {
       </div>
 
       {revealed ? (
-        <div className={`reveal ${last?.solved ? 'won' : 'lost'}`}>
-          {artwork(g.song) && <img src={artwork(g.song)} alt="" className="cover" />}
-          <p className="reveal-verdict">
-            {last?.solved
-              ? `Got it in ${last.seconds.toFixed(1)}s${isBandle ? ` on ${LAYERS[last.layer].name.toLowerCase()}` : ''}`
-              : 'Not this time'}
-          </p>
-          <h2>{g.song.t}</h2>
-          <p className="muted">{g.song.a}{g.song.y ? ` · ${g.song.y}` : ''}</p>
-          <p className="reveal-score">+{last?.score.toLocaleString() ?? 0}</p>
-          <div className="reveal-actions">
-            <button type="button" className="btn ghost" onClick={() => g.play(30)}>
-              <PlayIcon size={16} /> Hear the full clip
-            </button>
-            <button type="button" className="btn primary" onClick={g.next}>
-              {g.round + 1 >= SONGS_PER_RUN ? 'See results' : 'Next song'}
-            </button>
-          </div>
-        </div>
+        <Reveal
+          key={g.round}
+          song={g.song}
+          result={last}
+          isBandle={isBandle}
+          isLastRound={g.round + 1 >= SONGS_PER_RUN}
+          onReplay={() => g.play(30, LAYERS.length - 1)}
+          onNext={g.next}
+        />
       ) : (
         <>
-          <div className="stage">
+          <div className={`stage ${misses > 0 ? 'shook' : ''}`} key={`stage-${misses}`}>
             <button
               type="button"
               className={`play-btn ${g.playing ? 'is-playing' : ''}`}

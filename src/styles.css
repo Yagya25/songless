@@ -987,18 +987,51 @@ img { max-width: 100%; display: block; }
 /* ============================================================
    Reveal
    ============================================================ */
-.reveal { text-align: center; padding: 12px 0 20px; animation: fade .3s ease-out; }
-@keyframes fade { from { opacity: 0; transform: translateY(6px); } }
+.reveal { text-align: center; padding: 12px 0 20px; }
+
+/* Each piece lands in sequence rather than the card appearing all at once. */
+.reveal-art, .reveal-verdict, .reveal-title, .reveal-by, .reveal-score,
+.reveal-note, .reveal-actions {
+  animation: riseIn .5s cubic-bezier(.2, .8, .25, 1) backwards;
+}
+.reveal-art { animation-delay: 0s; }
+.reveal-verdict { animation-delay: .16s; }
+.reveal-title { animation-delay: .24s; }
+.reveal-by { animation-delay: .3s; }
+.reveal-score { animation-delay: .38s; }
+.reveal-note { animation-delay: .44s; }
+.reveal-actions { animation-delay: .5s; }
+
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+.reveal-art { position: relative; display: grid; place-items: center; margin-bottom: 22px; }
 
 .cover {
   width: 180px;
   height: 180px;
   border-radius: var(--r-lg);
   object-fit: cover;
-  margin: 0 auto 22px;
   border: 1px solid var(--line);
   box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
 }
+.reveal.won .cover { animation: coverPop .62s cubic-bezier(.18, 1.5, .4, 1) .04s backwards; }
+.reveal.lost .cover { filter: grayscale(.7) brightness(.75); }
+@keyframes coverPop {
+  from { opacity: 0; transform: scale(.72) rotate(-4deg); }
+  to { opacity: 1; transform: none; }
+}
+.cover-blank {
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  font-size: 56px;
+  font-weight: 600;
+  color: var(--muted-2);
+}
+
 .reveal-verdict {
   font-size: 11.5px;
   font-weight: 600;
@@ -1008,17 +1041,61 @@ img { max-width: 100%; display: block; }
 }
 .reveal.won .reveal-verdict { color: var(--good); }
 .reveal.lost .reveal-verdict { color: var(--hot); }
-.reveal h2 { font-size: clamp(22px, 4vw, 29px); margin-bottom: 6px; }
-.reveal .muted { font-size: 14px; }
+.reveal-title { font-size: clamp(22px, 4vw, 29px); margin-bottom: 6px; }
+.reveal-by { font-size: 14px; }
 .reveal-score {
   font-size: 38px;
   font-weight: 600;
-  margin: 20px 0 26px;
+  margin: 20px 0 8px;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.045em;
-  color: var(--accent);
 }
-.reveal-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.reveal.won .reveal-score {
+  color: var(--accent);
+  text-shadow: 0 0 34px rgba(216, 255, 71, .34);
+}
+.reveal.lost .reveal-score { color: var(--muted-2); }
+.reveal-note { font-size: 12px; color: var(--muted-2); margin-bottom: 6px; }
+.reveal-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+
+/* ---------- confetti burst ---------- */
+.burst {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 2;
+}
+.burst i {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: var(--accent);
+  animation: fly 1s cubic-bezier(.15, .75, .3, 1) var(--d) backwards;
+}
+.burst i.sq { border-radius: 1px; }
+.burst i:nth-child(3n) { background: var(--good); }
+.burst i:nth-child(4n) { background: #fff; }
+@keyframes fly {
+  0% { opacity: 1; transform: rotate(var(--a)) translateX(6px) rotate(0) scale(1); }
+  70% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateX(var(--r)) rotate(var(--spin)) scale(.3);
+  }
+}
+
+/* ---------- shake the stage on a wrong guess ---------- */
+/* Only when the current round already has a miss, so a fresh round is still. */
+.stage.shook { animation: nudge .42s cubic-bezier(.36, .07, .19, .97); }
+@keyframes nudge {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-7px); }
+  40%, 60% { transform: translateX(7px); }
+}
 
 /* ============================================================
    Results
