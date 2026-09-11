@@ -4,7 +4,7 @@ import ArtistPicker from './screens/ArtistPicker';
 import Play from './screens/Play';
 import Results from './screens/Results';
 import { Logo } from './components/Icons';
-import { loadArtistSongs, loadHits } from './game/library';
+import { byTier, loadArtistSongs, loadMix } from './game/library';
 import { audio } from './audio/engine';
 import { readStats } from './game/storage';
 import { SONGS_PER_RUN } from './game/scoring';
@@ -16,6 +16,7 @@ export default function App() {
   const [pool, setPool] = useState(null);
   const [poolLabel, setPoolLabel] = useState('');
   const [songCount, setSongCount] = useState(SONGS_PER_RUN);
+  const [tier, setTier] = useState('top');
   const [run, setRun] = useState(0);
   const [outcome, setOutcome] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -51,14 +52,19 @@ export default function App() {
   // A single artist plays 5 songs; two or more opens it up to 10, since a
   // combined pool is both bigger and harder to place.
   const playArtists = useCallback(
-    (chosen) => {
+    (chosen, pick) => {
       const count = chosen.length > 1 ? 10 : SONGS_PER_RUN;
       const label =
         chosen.length === 1
           ? chosen[0].n
           : `${chosen[0].n} + ${chosen.length - 1} more`;
       return begin(
-        async () => (await Promise.all(chosen.map((a) => loadArtistSongs(a.id)))).flat(),
+        async () => {
+          const cats = await Promise.all(chosen.map((a) => loadArtistSongs(a.id)));
+          // Tier each catalogue separately, so one huge artist can't crowd out
+          // a smaller one's hits in a combined pool.
+          return cats.flatMap((songs) => byTier(songs, pick, Math.ceil(count / chosen.length)));
+        },
         label,
         count
       );
@@ -111,14 +117,17 @@ export default function App() {
         {screen === 'picker' && (
           <ArtistPicker
             onBack={goHome}
-            onPickMix={() => begin(loadHits, 'Mix — every artist', SONGS_PER_RUN)}
+            tier={tier}
+            setTier={setTier}
+            onPickMix={(pick) =>
+              begin(() => loadMix(pick), `Mix — ${pick === 'deep' ? 'deep cuts' : 'every artist'}`, SONGS_PER_RUN)}
             onPlay={playArtists}
           />
         )}
 
         {screen === 'play' && pool && (
           <Play
-            key={`${poolLabel}-${mode}-${songCount}-${run}`}
+            key={`${poolLabel}-${mode}-${songCount}-${tier}-${run}`}
             mode={mode}
             pool={pool}
             poolLabel={poolLabel}

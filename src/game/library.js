@@ -12,9 +12,23 @@ async function getJSON(url) {
   return p;
 }
 
+// Keep in step with TOP_SONGS in scripts/build-library.mjs.
+export const TOP_SONGS = 15;
+
 export const loadArtists = () => getJSON(`${BASE}/artists.json`);
-export const loadHits = () => getJSON(`${BASE}/hits.json`);
 export const loadArtistSongs = (id) => getJSON(`${BASE}/artists/${id}.json`);
+export const loadHits = () => getJSON(`${BASE}/hits.json`);
+export const loadDeep = () => getJSON(`${BASE}/deep.json`);
+export const loadMix = (tier) => (tier === 'deep' ? loadDeep() : loadHits());
+
+// A catalogue arrives in rough popularity order, so "top" is simply its front.
+// Falls back to the whole catalogue when a slice would be too thin for a run --
+// better to repeat a famous song than to refuse to start.
+export function byTier(songs, tier, minimum) {
+  if (tier === 'all') return songs;
+  const slice = tier === 'deep' ? songs.slice(TOP_SONGS) : songs.slice(0, TOP_SONGS);
+  return slice.length >= minimum ? slice : songs;
+}
 
 export function artwork(song, size = 300) {
   return song?.k ? song.k.replace(/\{sz\}/g, size) : null;

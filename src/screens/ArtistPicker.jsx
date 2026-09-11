@@ -4,7 +4,7 @@ import { Arrow, Back, Check, Cross, Globe, Search } from '../components/Icons';
 
 export const MAX_ARTISTS = 10;
 
-export default function ArtistPicker({ onPlay, onPickMix, onBack }) {
+export default function ArtistPicker({ onPlay, onPickMix, onBack, tier, setTier }) {
   const [artists, setArtists] = useState(null);
   const [query, setQuery] = useState('');
   const [region, setRegion] = useState('All');
@@ -54,11 +54,38 @@ export default function ArtistPicker({ onPlay, onPickMix, onBack }) {
         </div>
       </header>
 
-      <button type="button" className="mix-card" onClick={onPickMix}>
+      <div className="tier" role="radiogroup" aria-label="Song pool">
+        <button
+          type="button"
+          role="radio"
+          aria-checked={tier === 'top'}
+          className={`tier-opt ${tier === 'top' ? 'is-on' : ''}`}
+          onClick={() => setTier('top')}
+        >
+          <strong>Top songs</strong>
+          <em>The hits everyone knows</em>
+        </button>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={tier === 'deep'}
+          className={`tier-opt ${tier === 'deep' ? 'is-on' : ''}`}
+          onClick={() => setTier('deep')}
+        >
+          <strong>Deep cuts</strong>
+          <em>Past the singles. Much harder.</em>
+        </button>
+      </div>
+
+      <button type="button" className="mix-card" onClick={() => onPickMix(tier)}>
         <Globe size={24} />
         <span>
           <strong>Mix — every artist</strong>
-          <em>The biggest songs from all {artists.length} artists</em>
+          <em>
+            {tier === 'deep'
+              ? `Lesser-known tracks from all ${artists.length} artists`
+              : `The biggest songs from all ${artists.length} artists`}
+          </em>
         </span>
         <Arrow size={18} />
       </button>
@@ -136,9 +163,10 @@ export default function ArtistPicker({ onPlay, onPickMix, onBack }) {
             </ul>
             <div className="tray-go">
               <span className="tray-count">
-                {picked.length}/{MAX_ARTISTS} · {picked.length > 1 ? 10 : 5} songs
+                {picked.length}/{MAX_ARTISTS} · {picked.length > 1 ? 10 : 5} songs ·{' '}
+                {tier === 'deep' ? 'deep cuts' : 'top songs'}
               </span>
-              <button type="button" className="btn primary" onClick={() => onPlay(picked)}>
+              <button type="button" className="btn primary" onClick={() => onPlay(picked, tier)}>
                 Play <Arrow size={16} />
               </button>
             </div>

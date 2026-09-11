@@ -12,8 +12,14 @@ Afrobeats, Desi hip-hop, Punjabi and more.
 | **Bandle** | Start on the drums alone, then bring the band in: bass, chords, melody, vocals. | Drums alone is 10,000, down to 4,000 once the vocal is in. The 0.1s clock still applies on top. |
 | **Classic** | The original Heardle steps: 1s, 2s, 4s, 7s, 11s, 16s. | Each miss or skip unlocks the next step and lowers the score. |
 
-Five songs per run, 50,000 points on the table. Play a mixed pool or pick a
-single artist's catalogue.
+Five songs per run, 50,000 points on the table — or pick 2 to 10 artists and it
+becomes a 10-song run out of 100,000. Ranks are held as fractions of a perfect
+run, so a longer run is not automatically a better score.
+
+**Top songs or deep cuts.** A catalogue comes back in rough popularity order, so
+the first 15 tracks are an artist's hits and everything past that is the deep
+end. The picker toggles between them; mixed mode swaps between two prebuilt
+pools. Deep cuts are considerably harder.
 
 ## Running it
 
@@ -44,9 +50,15 @@ Output:
 
 | File | Size | Loaded when |
 |---|---|---|
-| `artists.json` | 24 KB gz | Always — powers artist search |
+| `artists.json` | 27 KB gz | Always — powers artist search |
 | `artists/<id>.json` | ~30 KB | One artist is picked |
-| `hits.json` | 508 KB gz | Mixed mode only |
+| `hits.json` | ~362 KB gz | Mixed mode, top songs |
+| `deep.json` | ~357 KB gz | Mixed mode, deep cuts |
+
+Each artist contributes only 8 songs to the shared mix pools (`MIX_PER_ARTIST`)
+while `TOP_SONGS` governs the tier split inside a single catalogue — every artist
+lands in one file, so a couple of songs each is the difference between a ~450KB
+download and a multi-megabyte one.
 
 ## Notes on the audio
 

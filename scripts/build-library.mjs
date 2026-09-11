@@ -19,6 +19,13 @@ const RATE_BACKOFF_MS = [45_000, 120_000, 240_000];
 // Workers all funnel through the same rate gate, so this only overlaps waiting.
 const CONCURRENCY = 3;
 
+// Where a catalogue stops being an artist's "top songs" and becomes deep cuts.
+const TOP_SONGS = 15;
+// How many songs each artist contributes to the shared mix pools. Deliberately
+// smaller than TOP_SONGS: every artist lands in one file, so a couple of songs
+// each is the difference between a ~450KB download and a multi-megabyte one.
+const MIX_PER_ARTIST = 8;
+
 // Variant markers. Only ever tested against a title's SUFFIX -- the bracketed or
 // post-dash tail -- never the base title, or "Live and Let Die" and "Live Forever"
 // would be deleted as live recordings.
@@ -213,7 +220,8 @@ async function main() {
 
   // ---- compile everything in the cache into the shipped data files ----
   const index = [];
-  const hits = [];
+  const hits = [];   // the famous end of each catalogue
+  const deep = [];   // lesser-known cuts, for players who want it hard
   const seenArtistIds = new Set();
 
   for (const f of await readdir(CACHE)) {
@@ -235,18 +243,23 @@ async function main() {
       c: a.songs.length,
       k: a.songs.find((s) => s.k)?.k || null,
     });
-    hits.push(...a.songs.slice(0, 12));
+    hits.push(...a.songs.slice(0, MIX_PER_ARTIST));
+    // Skip past the hits before sampling, so the two pools never overlap.
+    deep.push(...a.songs.slice(TOP_SONGS + 5, TOP_SONGS + 5 + MIX_PER_ARTIST));
   }
 
   index.sort((x, y) => x.n.localeCompare(y.n));
   await writeFile(path.join(OUT, 'artists.json'), JSON.stringify(index));
   await writeFile(path.join(OUT, 'hits.json'), JSON.stringify(hits));
+  await writeFile(path.join(OUT, 'deep.json'), JSON.stringify(deep));
 
   const totalSongs = index.reduce((n, a) => n + a.c, 0);
   console.log(
     `\nBuilt ${index.length} artists / ${totalSongs.toLocaleString()} songs.\n` +
     `  artists.json  ${(JSON.stringify(index).length / 1024).toFixed(0)}KB\n` +
-    `  hits.json     ${(JSON.stringify(hits).length / 1024).toFixed(0)}KB (${hits.length} songs)`
+    `  hits.json     ${(JSON.stringify(hits).length / 1024).toFixed(0)}KB (${hits.length} songs)
+` +
+    `  deep.json     ${(JSON.stringify(deep).length / 1024).toFixed(0)}KB (${deep.length} songs)`
   );
 }
 
